@@ -123,9 +123,6 @@ int GameImpl::nShips() const
 
 int GameImpl::shipLength(int shipId) const
 {
-	if (shipId < 0 || shipId > ships.size())
-		return false;
-
 	return ships[shipId].shipLength;
 }
 
@@ -176,7 +173,20 @@ Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool should
 		bool p1_shotValid;
 		int p1_shipId = 0;
 		Point p1_pointHit = p1->recommendAttack();
-		b2.attack(p1_pointHit, p1_shotHit, p1_shipDestroyed, p1_shipId);
+		
+		//Check if position has been fired at before -- redo shot if it has
+		if (!p1->isHuman()) {
+			while (!b2.attack(p1_pointHit, p1_shotHit, p1_shipDestroyed, p1_shipId)) {
+				p1_pointHit = p1->recommendAttack();
+				b1.attack(p1_pointHit, p1_shotHit, p1_shipDestroyed, p1_shipId);
+			}
+		}
+		if (p1->isHuman()) {
+			if (!b2.attack(p1_pointHit, p1_shotHit, p1_shipDestroyed, p1_shipId)) {
+				cout << p1->name() << " wasted a shot at " << "<<" << p1_pointHit.r << "," << p1_pointHit.c << ">" << endl;
+			}
+		}
+		//b2.attack(p1_pointHit, p1_shotHit, p1_shipDestroyed, p1_shipId);
 		if (isValid(p1_pointHit)) {
 			p1_shotValid = true;
 		}
@@ -190,7 +200,7 @@ Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool should
 		else if (p1_shotHit && !p1_shipDestroyed)
 			cout << p1->name() << " attacked " << "<" << p1_pointHit.r << "," << p1_pointHit.c << ">" << " and hit something, resulting in:" << endl;
 		else if (p1_shotHit && p1_shipDestroyed)
-			cout << p1->name() << " attacked " << "<" << p1_pointHit.r << "," << p1_pointHit.c << ">" << " and destroyed the " << shipName(p1_shipId) << endl;
+			cout << p1->name() << " attacked " << "<" << p1_pointHit.r << "," << p1_pointHit.c << ">" << " and destroyed the " << shipName(p1_shipId) << ", resulting in:" << endl;
 		//display after p1 attack
 		if (p1->isHuman())
 			b2.display(true);
@@ -219,11 +229,17 @@ Player* GameImpl::play(Player* p1, Player* p2, Board& b1, Board& b2, bool should
 		Point p2_pointHit = p2->recommendAttack();
 
 		//Check if position has been fired at before
-		while (!b1.attack(p2_pointHit, p2_shotHit, p2_shipDestroyed, p2_shipId) && p2->isHuman()) {
-			p2_pointHit = p2->recommendAttack();
-			b1.attack(p2_pointHit, p2_shotHit, p2_shipDestroyed, p2_shipId);
+		if (!p2->isHuman()) {
+			while (!b1.attack(p2_pointHit, p2_shotHit, p2_shipDestroyed, p2_shipId)) {
+				p2_pointHit = p2->recommendAttack();
+				b1.attack(p2_pointHit, p2_shotHit, p2_shipDestroyed, p2_shipId);
+			}
 		}
-			
+		if (p2->isHuman()) {
+			if (!b1.attack(p2_pointHit, p2_shotHit, p2_shipDestroyed, p2_shipId)) {
+				cout << p2->name() << " wasted a shot at " << "<" << p2_pointHit.r << "," << p2_pointHit.c << ">" << endl;
+			}
+		}
 		
 		if (isValid(p2_pointHit)) {
 			p2_shotValid = true;

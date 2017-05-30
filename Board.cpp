@@ -17,6 +17,7 @@ public:
 	bool unplaceShip(Point topOrLeft, int shipId, Direction dir);
 	void display(bool shotsOnly) const;
 	bool attack(Point p, bool& shotHit, bool& shipDestroyed, int& shipId);
+	bool isShipDestroyed(char shipSym) const;
 	bool allShipsDestroyed() const;
 
 private:
@@ -79,12 +80,12 @@ bool BoardImpl::placeShip(Point topOrLeft, int shipId, Direction dir)
 	if (!m_game.isValid(topOrLeft))
 		return false;
 	if (grid[topOrLeft.r][topOrLeft.c] != '.') {
-		cout << grid[topOrLeft.r][topOrLeft.c] << " is not valid" << endl;
 		return false;
 	}
 
 	if (dir == HORIZONTAL) {
-		for (int j = topOrLeft.c; j < m_game.shipLength(shipId); j++) {
+		//If the space to the right is not free, return false
+		for (int j = topOrLeft.c; j < topOrLeft.c + m_game.shipLength(shipId); j++) {
 			if (grid[topOrLeft.r][j] != '.')
 				return false;
 		}
@@ -94,11 +95,10 @@ bool BoardImpl::placeShip(Point topOrLeft, int shipId, Direction dir)
 		for (int j = topOrLeft.c; j < topOrLeft.c + m_game.shipLength(shipId); j++) {
 			grid[topOrLeft.r][j] = m_game.shipSymbol(shipId);
 		}
-		display(false);
 	}
 
 	if (dir == VERTICAL) {
-		for (int i = topOrLeft.r; i < m_game.shipLength(shipId); i++) {
+		for (int i = topOrLeft.r; i < topOrLeft.r + m_game.shipLength(shipId); i++) {
 			if (grid[i][topOrLeft.c] != '.')
 				return false;
 		}
@@ -108,7 +108,6 @@ bool BoardImpl::placeShip(Point topOrLeft, int shipId, Direction dir)
 		for (int i = topOrLeft.r; i < topOrLeft.r + m_game.shipLength(shipId); i++) {
 			grid[i][topOrLeft.c] = m_game.shipSymbol(shipId);
 		}
-		display(false);
 	}
 
 	return true;
@@ -201,15 +200,7 @@ bool BoardImpl::attack(Point p, bool& shotHit, bool& shipDestroyed, int& shipId)
 		grid[p.r][p.c] = 'X';
 
 		//Check if the ship still exists on the board
-		for (int i = 0; i < m_game.rows(); i++) {
-			for (int j = 0; j < m_game.cols(); j++) {
-				if (grid[i][j] == shipSym) {
-					shipDestroyed = false;
-					break;
-				}
-
-			}
-		}
+		shipDestroyed = isShipDestroyed(shipSym);
 
 		if (shipDestroyed) {
 			//Assign shipId if ship was destroyed
@@ -223,6 +214,20 @@ bool BoardImpl::attack(Point p, bool& shotHit, bool& shipDestroyed, int& shipId)
 		shipDestroyed = false;
 		shotHit = false;
 		grid[p.r][p.c] = 'o';
+	}
+
+	return true;
+}
+
+bool BoardImpl::isShipDestroyed(char shipSym) const
+{
+	for (int i = 0; i < m_game.rows(); i++) {
+		for (int j = 0; j < m_game.cols(); j++) {
+			if (grid[i][j] == shipSym) {
+				return false;
+			}
+
+		}
 	}
 
 	return true;
