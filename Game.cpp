@@ -35,13 +35,13 @@ private:
 		char symbol;
 		string shipName;
 
-		Ship::Ship(int shipLength, char symbol, string shipName) {
+		Ship(int shipLength, char symbol, string shipName) {
 			this->shipLength = shipLength;
 			this->symbol = symbol;
 			this->shipName = shipName;
 		}
 
-		Ship::Ship(const Ship &rhs) {
+		Ship(const Ship &rhs) {
 			this->shipLength = rhs.shipLength;
 			this->symbol = rhs.symbol;
 			this->shipName = rhs.shipName;
@@ -67,11 +67,10 @@ GameImpl::GameImpl(int nRows, int nCols)
 
 GameImpl::~GameImpl()
 {
-	for (int i = 0; i < ships.size(); i++) {
+	/*for (int i = 0; i < ships.size(); i++) {
 		delete &ships[i];
-	}
+	}*/
 	ships.clear();
-	delete &ships;
 }
 
 int GameImpl::rows() const
@@ -109,7 +108,7 @@ bool GameImpl::addShip(int length, char symbol, string name)
 	if (symbol == 'X' || symbol == 'o' || symbol == '.')
 		return false;
 
-	Ship*tempShip = new Ship(length, symbol, name);
+	Ship* tempShip = new Ship(length, symbol, name);
 
 	ships.push_back(*tempShip);
 
@@ -139,8 +138,6 @@ char GameImpl::shipSymbol(int shipId) const
 
 string GameImpl::shipName(int shipId) const
 {
-	if (shipId < 0 || shipId > ships.size())
-		return false;
 	return ships[shipId].shipName;
 }
 

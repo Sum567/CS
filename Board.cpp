@@ -23,26 +23,19 @@ private:
 	// TODO:  Decide what private members you need.  Here's one that's likely
 	//        to be useful:
 	const Game& m_game;
-	char**grid;
+	char grid[MAXROWS][MAXCOLS];
 };
 
 BoardImpl::BoardImpl(const Game& g)
 	: m_game(g)
 {
-	grid = new char*[g.rows()];
 
-	for (int i = 0; i < g.rows(); i++) {
-		grid[i] = new char[g.cols()];
-	}
 	// This compiles, but may not be correct
 }
 
 BoardImpl::~BoardImpl()
 {
-	delete grid[m_game.rows()];
-	for (int i = 0; i < m_game.rows(); i++) {
-		delete grid[m_game.cols()];
-	}
+
 }
 
 void BoardImpl::clear()
@@ -71,68 +64,91 @@ void BoardImpl::unblock()
 	for (int r = 0; r < m_game.rows(); r++)
 		for (int c = 0; c < m_game.cols(); c++)
 		{
-			grid[r][c] = '.';
+			if (grid[r][c] == '#')
+				grid[r][c] = '.';
 		}
 }
 
 bool BoardImpl::placeShip(Point topOrLeft, int shipId, Direction dir)
 {
-	bool allClear = true;
+	//bool allClear = true;
 
 	if (shipId < 0 || shipId >= m_game.nShips())
-		allClear = false;
+		return false;
 
 	if (!m_game.isValid(topOrLeft))
-		allClear = false;
+		return false;
+	if (grid[topOrLeft.r][topOrLeft.c] != '.') {
+		cout << grid[topOrLeft.r][topOrLeft.c] << " is not valid" << endl;
+		return false;
+	}
 
 	if (dir == HORIZONTAL) {
+		for (int j = topOrLeft.c; j < m_game.shipLength(shipId); j++) {
+			if (grid[topOrLeft.r][j] != '.')
+				return false;
+		}
 		if (m_game.cols() - topOrLeft.c < m_game.shipLength(shipId)) {
-			allClear = false;
+			return false;
 		}
 		for (int j = topOrLeft.c; j < topOrLeft.c + m_game.shipLength(shipId); j++) {
 			grid[topOrLeft.r][j] = m_game.shipSymbol(shipId);
 		}
+		display(false);
 	}
 
 	if (dir == VERTICAL) {
+		for (int i = topOrLeft.r; i < m_game.shipLength(shipId); i++) {
+			if (grid[i][topOrLeft.c] != '.')
+				return false;
+		}
 		if (m_game.rows() - topOrLeft.r < m_game.shipLength(shipId)) {
-			allClear = false;
+			return false;
 		}
 		for (int i = topOrLeft.r; i < topOrLeft.r + m_game.shipLength(shipId); i++) {
 			grid[i][topOrLeft.c] = m_game.shipSymbol(shipId);
 		}
+		display(false);
 	}
 
-	return allClear;
+	return true;
 }
 
 bool BoardImpl::unplaceShip(Point topOrLeft, int shipId, Direction dir)
 {
-	bool allClear = true;
+	//bool allClear = true;
 
 	if (shipId < 0 || shipId >= m_game.nShips())
-		allClear = false;
+		return false;
 
 	if (m_game.isValid(topOrLeft))
-		allClear = false;
+		return false;
 
 	if (dir == HORIZONTAL) {
+		for (int j = topOrLeft.c; j < m_game.shipLength(shipId); j++) {
+			if (grid[topOrLeft.r][j] != '.')
+				return false;
+		}
 		if (m_game.cols() - topOrLeft.c < m_game.shipLength(shipId))
-			allClear = false;
+			return false;
 		for (int j = topOrLeft.c; j < m_game.shipLength(shipId); j++) {
 			grid[topOrLeft.r][j] = '.';
 		}
 	}
 
 	if (dir == VERTICAL) {
+		for (int i = topOrLeft.r; i < m_game.shipLength(shipId); i++) {
+			if (grid[i][topOrLeft.c] != '.')
+				return false;
+		}
 		if (m_game.rows() - topOrLeft.r < m_game.shipLength(shipId))
-			allClear = false;
+			return false;
 		for (int i = topOrLeft.r; i < m_game.shipLength(shipId); i++) {
 			grid[i][topOrLeft.c] = '.';
 		}
 	}
 
-	return allClear;
+	return true;
 }
 
 //Missed shots recorded in player
@@ -150,7 +166,7 @@ void BoardImpl::display(bool shotsOnly) const
 			if (shotsOnly == false)
 				cout << grid[i][j];
 
-			else if (shotsOnly == true){
+			else if (shotsOnly == true) {
 				//Ship is present, hide it!
 				if (grid[i][j] != '.' && grid[i][j] != 'X' && grid[i][j] != 'o') {
 					cout << '.';

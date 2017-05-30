@@ -188,17 +188,17 @@ class MediocrePlayer :public Player
 {
 public:
 	MediocrePlayer(string nm, const Game& g);
-	virtual bool MediocrePlayer::placeShips(Board& b);
-	bool MediocrePlayer::checkPlacement(Board& b, int shipId);
-	virtual void MediocrePlayer::recordAttackByOpponent(Point p);
-	virtual Point MediocrePlayer::recommendAttack();
+	virtual bool placeShips(Board& b);
+	bool checkPlacement(Board& b, int shipId);
+	virtual void recordAttackByOpponent(Point p);
+	virtual Point recommendAttack();
 	virtual void recordAttackResult(Point p, bool validShot, bool shotHit, bool ShipDestroyed, int shipId);
 private:
 	Point lastHit;
 	bool lastValidShot;
 	bool ShipDestroyed;
 	int shipId;
-	bool state;
+	bool state = false;
 };
 // Remember that Mediocre::placeShips(Board& b) must start by calling
 // b.block(), and must call b.unblock() just before returning.
@@ -212,41 +212,46 @@ MediocrePlayer::MediocrePlayer(string nm, const Game& g)
 bool MediocrePlayer::placeShips(Board& b)
 {
 	b.block();
-
-	checkPlacement(b, 0);
+	b.display(false);
 	if (!checkPlacement(b, 0))
 		return false;
 	b.unblock();
+	b.display(false);
 	return true;
 }
 
 bool MediocrePlayer::checkPlacement(Board& b, int shipId)
 {
+	if (shipId >= game().nShips())
+		return true;
+
 	Point tempPoint;
 	for (int i = 0; i < game().rows(); i++) {
 		for (int j = 0; j < game().cols(); j++) {
 			tempPoint.r = i;
 			tempPoint.c = j;
 			if (b.placeShip(tempPoint, shipId, HORIZONTAL)) {
-				checkPlacement(b, shipId + 1);
-			}
-			else {
-				b.unplaceShip(tempPoint, shipId, HORIZONTAL);
-				if (b.placeShip(tempPoint, shipId, VERTICAL)) {
-					checkPlacement(b, shipId + 1);
+				if (!checkPlacement(b, shipId + 1)) {
+					b.unplaceShip(tempPoint, shipId, HORIZONTAL);
+					b.placeShip(tempPoint, shipId, VERTICAL);
 				}
 				else {
-					//if can't do horizontal or vertical...unplace previous ships
+					return true;
+				}
+			}
+			else if (b.placeShip(tempPoint, shipId, VERTICAL)){
+				if (!checkPlacement(b, shipId + 1)) {
 					b.unplaceShip(tempPoint, shipId, VERTICAL);
-					
-
+					b.placeShip(tempPoint, shipId, HORIZONTAL);
+				}
+				else {
+					return true;
 				}
 			}
 		}
 	}
 
-	if (shipId == game().nShips() - 1)
-		return true;
+	return false;
 }
 
 //Mediocre Player does not record attacks done to itself

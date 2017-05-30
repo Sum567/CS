@@ -16,9 +16,9 @@ bool addStandardShips(Game& g)
 
 int main()
 {
-	Game g(10, 10);
+	Game g(5, 5);
 	g.addShip(2, 'R', "rowboat");
-	Player*p1 = createPlayer("awful", "Bob", g);
+	Player*p1 = createPlayer("mediocre", "Bob", g);
 	Player*p2 = createPlayer("human", "Sumeet", g);
 	g.play(p1, p2);
 	delete p1;
