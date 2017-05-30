@@ -122,31 +122,53 @@ bool HumanPlayer::placeShips(Board& b)
 		cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
 		while (!getLineWithTwoIntegers(r, c)) {
 			cout << "You must enter two integers." << endl;
-			getLineWithTwoIntegers(r, c);
+			cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
+			continue;
 		}
 		tempPoint.r = r;
 		tempPoint.c = c;
 		while (!game().isValid(tempPoint)) {
 			cout << "The ship cannot be placed there." << endl;
 			cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
-			if (!getLineWithTwoIntegers(r, c)) {
+			while (!getLineWithTwoIntegers(r, c)) {
 				cout << "You must enter two integers." << endl;
 				cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
+				continue;
 			}
-			getLineWithTwoIntegers(r, c);
+			tempPoint.r = r;
+			tempPoint.c = c;
 		}
 
 		tempPoint.r = r;
 		tempPoint.c = c;
 		if (dir == 'h') {
-			if (!b.placeShip(tempPoint, i, HORIZONTAL))
-				return false;
-			b.placeShip(tempPoint, i, HORIZONTAL);
+			while (!b.placeShip(tempPoint, i, HORIZONTAL)) {
+				cout << "The ship cannot be placed there." << endl;
+				cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
+				
+				while (!getLineWithTwoIntegers(r, c)) {
+					cout << "You must enter two integers." << endl;
+					cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
+					continue;
+				}
+				tempPoint.r = r;
+				tempPoint.c = c;
+			}
+				
 		}
 		else if (dir == 'v') {
-			if (!b.placeShip(tempPoint, i, VERTICAL))
-				return false;
-			b.placeShip(tempPoint, i, VERTICAL);
+			while (!b.placeShip(tempPoint, i, VERTICAL)) {
+				cout << "The ship cannot be placed there." << endl;
+				cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
+
+				while (!getLineWithTwoIntegers(r, c)) {
+					cout << "You must enter two integers." << endl;
+					cout << "Enter row and column of leftmost cell <e.g. 3 5>:" << endl;
+					continue;
+				}
+				tempPoint.r = r;
+				tempPoint.c = c;
+			}
 		}
 		//display this player's board
 		b.display(false);
@@ -199,6 +221,7 @@ private:
 	bool ShipDestroyed;
 	int shipId;
 	bool state;
+	vector <Point> limitedSet;
 };
 // Remember that Mediocre::placeShips(Board& b) must start by calling
 // b.block(), and must call b.unblock() just before returning.
@@ -273,7 +296,6 @@ Point MediocrePlayer::recommendAttack()
 	int tempR;
 	int tempC;
 	Point tempPoint;
-	vector <Point> limitedSet;
 
 	//In first state - return random point
 	tempR = randInt(game().rows() - 1);
@@ -298,7 +320,28 @@ Point MediocrePlayer::recommendAttack()
 			state = false;
 			return tempPoint;
 		}
+		
+		int randIndex = randInt(limitedSet.size() - 1);
+		tempPoint.r = limitedSet[randIndex].r;
+		tempPoint.c = limitedSet[randIndex].c;
+	}
 
+	return tempPoint;
+
+
+}
+
+//Called in game.play() every time after this player attacks
+void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool ShipDestroyed, int shipId)
+{
+	lastValidShot = validShot;
+	this->shipId = shipId;
+	this->ShipDestroyed = ShipDestroyed;
+
+	if (validShot && shotHit && !ShipDestroyed && !state) {
+		state = true;
+		lastHit = p;
+		Point tempPoint;
 		//Set of valid positions no more than 4 steps away from each dir
 
 		limitedSet.clear();
@@ -332,27 +375,9 @@ Point MediocrePlayer::recommendAttack()
 			if (game().isValid(tempPoint))
 				limitedSet.push_back(tempPoint);
 		}
-
-		int randIndex = randInt(limitedSet.size() - 1);
-		tempPoint.r = limitedSet[randIndex].r;
-		tempPoint.c = limitedSet[randIndex].c;
 	}
-
-	return tempPoint;
-
-
-}
-
-//Called in game.play() every time after this player attacks
-void MediocrePlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool ShipDestroyed, int shipId)
-{
-	lastValidShot = validShot;
-	this->shipId = shipId;
-	this->ShipDestroyed = ShipDestroyed;
-
-	if (validShot && shotHit && !ShipDestroyed && !state) {
+	else if (validShot && !shotHit && !ShipDestroyed && state) {
 		state = true;
-		lastHit = p;
 	}
 
 }
@@ -490,9 +515,7 @@ void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool 
 	this->shipId = shipId;
 	this->ShipDestroyed = ShipDestroyed;
 
-	state = false;
-
-	if (validShot && shotHit && !ShipDestroyed) {
+	if (validShot && shotHit && !ShipDestroyed && !state) {
 		//Second state of selecting positions at specific radius activated
 		state = true;
 		lastHit = p;
@@ -537,7 +560,7 @@ void GoodPlayer::recordAttackResult(Point p, bool validShot, bool shotHit, bool 
 			limitedSet.push(tempPoint);
 
 	}
-	else if (validShot && !shotHit && !ShipDestroyed) {
+	else if (validShot && !shotHit && !ShipDestroyed && state) {
 		state = true;
 	}
 
